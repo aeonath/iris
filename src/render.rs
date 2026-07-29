@@ -82,6 +82,22 @@ pub fn composite(
     }
 }
 
+/// Copies the premultiplied RGBA8 bytes of a sub-rectangle out of `pixmap`,
+/// tightly packed (no row padding) so the result can go straight into an
+/// `egui::ColorImage` for a partial texture upload. The caller must ensure
+/// `x + width <= pixmap.width()` and `y + height <= pixmap.height()`.
+pub fn extract_region(pixmap: &Pixmap, x: u32, y: u32, width: u32, height: u32) -> Vec<u8> {
+    let stride = pixmap.width() as usize * 4;
+    let data = pixmap.data();
+    let mut out = Vec::with_capacity(width as usize * height as usize * 4);
+    for row in y..y + height {
+        let row_start = row as usize * stride + x as usize * 4;
+        let row_end = row_start + width as usize * 4;
+        out.extend_from_slice(&data[row_start..row_end]);
+    }
+    out
+}
+
 /// Converts a pixmap's premultiplied pixels back to straight-alpha RGBA8,
 /// the format the system clipboard (via arboard) expects.
 pub fn pixmap_to_straight_rgba(pixmap: &Pixmap) -> Vec<u8> {
